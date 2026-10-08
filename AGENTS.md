@@ -4,6 +4,7 @@
 
 - **Project:** THOTH V2 Documentation
 - **Repository:** [GridsDev/THOTH-Documents](https://github.com/GridsDev/THOTH-Documents)
+- **Documented source project:** [Ex0-Adam/THOTH-V2](https://github.com/Ex0-Adam/THOTH-V2)
 - **Purpose:** Thai-language VitePress documentation for the THOTH CMS and its developers.
 - **Documentation source:** Markdown files in `guide/`, `reference/`, and `index.md`.
 - **Site configuration:** `.vitepress/config.mts`
@@ -17,7 +18,7 @@
 4. Explain technical terms and abbreviations at first use when practical. Prefer clear instructions suitable for developers with basic experience.
 5. Keep examples safe to copy: never include real credentials, tokens, private keys, production connection strings, or personal data. Use unmistakable placeholders.
 6. Link related pages with valid VitePress routes and update `.vitepress/config.mts` navigation/sidebar when adding or renaming pages.
-7. Do not change the THOTH CMS source from this documentation project. The CMS source repository is separate.
+7. Treat `Ex0-Adam/THOTH-V2` as the source project being documented. Do not change its source from this documentation project; the repositories are separate.
 8. Do not create commits, push, alter remotes, or change GitHub repository settings unless the owner explicitly asks.
 9. Avoid dependency changes unless needed. Review compatibility and security advisories before changing dependencies, and keep `package-lock.json` in sync with `package.json`.
 10. Never deploy production, create paid resources, or expose a development server publicly without explicit authorization.

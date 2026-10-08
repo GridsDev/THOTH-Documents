@@ -2,6 +2,10 @@
 
 เว็บไซต์เอกสารภาษาไทยสำหรับ THOTH CMS จัดทำด้วย VitePress แยกจาก source code ของ CMS
 
+## โครงการต้นทาง
+
+เอกสารชุดนี้อ้างอิง source code ของ [THOTH V2](https://github.com/Ex0-Adam/THOTH-V2) ส่วน repository ปัจจุบันเก็บเฉพาะเว็บไซต์เอกสาร
+
 ## เริ่มต้นใช้งาน
 
 ต้องมี Node.js และ npm ที่รองรับ VitePress 1.6.4 และ Vite 6

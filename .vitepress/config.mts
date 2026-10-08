@@ -16,6 +16,7 @@ export default defineConfig({
       { text: "เริ่มพัฒนา", link: "/guide/quick-start" },
       { text: "อ้างอิง API", link: "/reference/api" },
       { text: "สถานะ", link: "/guide/status" },
+      { text: "Source code", link: "https://github.com/Ex0-Adam/THOTH-V2" },
     ],
     sidebar: {
       "/guide/": [
