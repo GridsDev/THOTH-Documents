@@ -5,6 +5,7 @@
 - **Project:** THOTH V2 Documentation
 - **Repository:** [GridsDev/THOTH-Documents](https://github.com/GridsDev/THOTH-Documents)
 - **Documented source project:** [Ex0-Adam/THOTH-V2](https://github.com/Ex0-Adam/THOTH-V2)
+- **Deployed documentation site:** [thoth-documents.vercel.app](https://thoth-documents.vercel.app/)
 - **Purpose:** Thai-language VitePress documentation for the THOTH CMS and its developers.
 - **Documentation source:** Markdown files in `guide/`, `reference/`, and `index.md`.
 - **Site configuration:** `.vitepress/config.mts`

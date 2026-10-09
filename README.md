@@ -6,6 +6,8 @@
 
 เอกสารชุดนี้อ้างอิง source code ของ [THOTH V2](https://github.com/Ex0-Adam/THOTH-V2) ส่วน repository ปัจจุบันเก็บเฉพาะเว็บไซต์เอกสาร
 
+เว็บไซต์เอกสารที่ deploy แล้ว: [https://thoth-documents.vercel.app/](https://thoth-documents.vercel.app/)
+
 ## เริ่มต้นใช้งาน
 
 ต้องมี Node.js และ npm ที่รองรับ VitePress 1.6.4 และ Vite 6
@@ -24,6 +26,10 @@ npm run docs:dev      # เปิด development server
 npm run docs:build    # สร้าง static site ไปที่ .vitepress/dist
 npm run docs:preview  # ดู static site ที่ build แล้ว
 ```
+
+## Deploy บน Vercel
+
+ตั้ง Root Directory ของ Vercel project เป็น repository root (`./`) ไฟล์ `vercel.json` กำหนดให้ติดตั้งด้วย `npm ci`, build ด้วย `npm run docs:build`, เผยแพร่ไฟล์จาก `.vitepress/dist` และให้ URL ที่ไม่มีนามสกุล `.html` ทำงานได้ด้วย `cleanUrls` หลังปรับ project settings หรือเพิ่ม configuration ให้สร้าง deployment ใหม่ แล้วตรวจหน้าแรกและหน้า `/guide/overview`
 
 ## โครงสร้าง
 

@@ -6,7 +6,7 @@
 
 - Node.js รุ่นที่รองรับ Next.js 16; Docker image ของ CMS ใช้ Node 22 Alpine
 - npm
-- PostgreSQL ที่เข้าถึงได้จากเครื่อง dev หรือ local PostgreSQL ผ่าน Docker
+- PostgreSQL ที่เข้าถึงได้จากเครื่อง dev หรือ local PostgreSQL ผ่าน Docker (หรือ managed PostgreSQL เช่น Supabase — ดู [การปรับใช้ฐานข้อมูล](/guide/database-deployment))
 - สอง terminal หากต้องการรัน CMS และ Public Web พร้อมกัน
 
 ตรวจเวอร์ชันเครื่องมือ:

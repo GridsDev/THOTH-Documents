@@ -2,9 +2,11 @@
 
 ## Database provider
 
-Prisma datasource ประกาศ `postgresql` และอ่าน URL จาก `DATABASE_URL`; authoritative schema อยู่ใน `prisma/schema.prisma`
+Prisma datasource ประกาศ `postgresql` และอ่าน URL จาก `DATABASE_URL`; authoritative schema อยู่ใน `prisma/schema.prisma` โดย schema ยังอ่านตัวแปรเดียว (ไม่มี `directUrl`) และไม่มี `prisma.config.ts`
 
 ใน source ที่ตรวจไม่พบโฟลเดอร์ Prisma migrations แบบมาตรฐาน ขณะที่คู่มือเก่าบางส่วนอธิบายการใช้ `prisma db push` จึงต้องตรวจ deployment flow ปัจจุบันก่อน deploy schema change
+
+ฐานข้อมูลที่ใช้เป็น PostgreSQL มาตรฐาน จึงเลือกได้ทั้ง self-hosted และ managed provider เช่น Supabase หรือ Neon วิธีเตรียม connection string, pooling, SSL และข้อควรระวังของ Supabase อยู่ในหน้า [การปรับใช้ฐานข้อมูล](/guide/database-deployment)
 
 ## Models
 
@@ -57,4 +59,4 @@ Prisma datasource ประกาศ `postgresql` และอ่าน URL จ�
 4. ประเมิน `PRODUCT_CMS_SETUP.sql` หากเอกสารติดตั้งหรือผู้ใช้ยังอาศัยไฟล์นี้
 5. ทดสอบ API และสองแอปหลังเปลี่ยน DTO/schema
 
-`prisma db push` เขียน schema ไปยัง database โดยตรง ห้ามใช้กับ production โดยไม่มีกระบวนการ backup/review/approval
+`prisma db push` เขียน schema ไปยัง database โดยตรง ห้ามใช้กับ production โดยไม่มีกระบวนการ backup/review/approval และไม่ควรรันผ่าน transaction pooler (พอร์ต 6543) — ดู [การปรับใช้ฐานข้อมูล](/guide/database-deployment)

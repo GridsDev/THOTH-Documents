@@ -49,10 +49,10 @@ var isBuiltInDirective = makeMap(
 );
 var cacheStringFunction = (fn) => {
   const cache = /* @__PURE__ */ Object.create(null);
-  return ((str) => {
+  return (str) => {
     const hit = cache[str];
     return hit || (cache[str] = fn(str));
-  });
+  };
 };
 var camelizeRE = /-\w/g;
 var camelize = cacheStringFunction(
@@ -11951,9 +11951,9 @@ function defineCustomElement(options, extraOptions, _createApp) {
   VueCustomElement.def = Comp;
   return VueCustomElement;
 }
-var defineSSRCustomElement = ((options, extraOptions) => {
+var defineSSRCustomElement = (options, extraOptions) => {
   return defineCustomElement(options, extraOptions, createSSRApp);
-});
+};
 var BaseClass = typeof HTMLElement !== "undefined" ? HTMLElement : class {
 };
 var VueElement = class _VueElement extends BaseClass {
@@ -12950,13 +12950,13 @@ var withModifiers = (fn, modifiers) => {
   if (!fn) return fn;
   const cache = fn._withMods || (fn._withMods = {});
   const cacheKey = modifiers.join(".");
-  return cache[cacheKey] || (cache[cacheKey] = ((event, ...args) => {
+  return cache[cacheKey] || (cache[cacheKey] = (event, ...args) => {
     for (let i = 0; i < modifiers.length; i++) {
       const guard = modifierGuards[modifiers[i]];
       if (guard && guard(event, modifiers)) return;
     }
     return fn(event, ...args);
-  }));
+  });
 };
 var keyNames = {
   esc: "escape",
@@ -12970,7 +12970,7 @@ var keyNames = {
 var withKeys = (fn, modifiers) => {
   const cache = fn._withKeys || (fn._withKeys = {});
   const cacheKey = modifiers.join(".");
-  return cache[cacheKey] || (cache[cacheKey] = ((event) => {
+  return cache[cacheKey] || (cache[cacheKey] = (event) => {
     if (!("key" in event)) {
       return;
     }
@@ -12980,7 +12980,7 @@ var withKeys = (fn, modifiers) => {
     )) {
       return fn(event);
     }
-  }));
+  });
 };
 var rendererOptions = extend({ patchProp }, nodeOps);
 var renderer;
@@ -12993,13 +12993,13 @@ function ensureHydrationRenderer() {
   enabledHydration = true;
   return renderer;
 }
-var render = ((...args) => {
+var render = (...args) => {
   ensureRenderer().render(...args);
-});
-var hydrate = ((...args) => {
+};
+var hydrate = (...args) => {
   ensureHydrationRenderer().hydrate(...args);
-});
-var createApp = ((...args) => {
+};
+var createApp = (...args) => {
   const app = ensureRenderer().createApp(...args);
   if (true) {
     injectNativeTagCheck(app);
@@ -13024,8 +13024,8 @@ var createApp = ((...args) => {
     return proxy;
   };
   return app;
-});
-var createSSRApp = ((...args) => {
+};
+var createSSRApp = (...args) => {
   const app = ensureHydrationRenderer().createApp(...args);
   if (true) {
     injectNativeTagCheck(app);
@@ -13039,7 +13039,7 @@ var createSSRApp = ((...args) => {
     }
   };
   return app;
-});
+};
 function resolveRootNamespace(container) {
   if (container instanceof SVGElement) {
     return "svg";
@@ -13336,4 +13336,4 @@ vue/dist/vue.runtime.esm-bundler.js:
   * @license MIT
   **)
 */
-//# sourceMappingURL=chunk-UYXZ4AWR.js.map
+//# sourceMappingURL=chunk-YY2KLAJF.js.map

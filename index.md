@@ -35,7 +35,7 @@ features:
 
 | คุณคือ | เริ่มที่ |
 | --- | --- |
-| ผู้ติดตั้ง THOTH | [ติดตั้งและตั้งค่าครั้งแรก](/guide/quick-start) |
+| ผู้ติดตั้ง THOTH | [ติดตั้งและตั้งค่าครั้งแรก](/guide/quick-start) และ [การปรับใช้ฐานข้อมูล](/guide/database-deployment) |
 | ผู้พัฒนา API หรือโมดูล | [Workflow นักพัฒนา](/guide/development) และ [มาตรฐานโมดูล](/guide/modules) |
 | ผู้เชื่อมต่อเว็บไซต์ | [REST API](/reference/api) และ [Public Web](/guide/public-web) |
 | ผู้ดูแล production | [ความปลอดภัย](/guide/security), [Environment](/guide/configuration), [Deployment](/guide/deployment) |
@@ -44,5 +44,7 @@ features:
 ## สถานะของเอกสาร
 
 เอกสารชุดนี้สร้างแยกจาก [source code ของ THOTH V2](https://github.com/Ex0-Adam/THOTH-V2) อ้างอิงข้อมูลที่ตรวจบนดิสก์ ณ วันที่ **9 ตุลาคม 2026** และแยกข้อเท็จจริงของโค้ดออกจากแผนในอนาคต
+
+เว็บไซต์เอกสาร: [thoth-documents.vercel.app](https://thoth-documents.vercel.app/)
 
 > **คำเตือน:** มี public API ที่คืนข้อมูลโดยไม่ต้อง login, HTML ของ Page ถูก render ด้วย `dangerouslySetInnerHTML` โดยไม่มี sanitization และ upload ยังไม่มี rate limit ตามสถานะที่บันทึกไว้ ตรวจหน้า [สถานะและข้อจำกัด](/guide/status) และ [ความปลอดภัย](/guide/security) ก่อนนำระบบขึ้น production

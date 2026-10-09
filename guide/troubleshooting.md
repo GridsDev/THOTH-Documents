@@ -18,6 +18,18 @@ npx prisma generate
 4. ใช้ `/api/system/bootstrap` เพื่อตรวจสถานะตาม response ที่เปิดเผย
 5. อย่ารัน `prisma db push` เพื่อแก้ connection issue เพราะมันไม่แก้ network และมีผลเปลี่ยน schema
 
+## Supabase: เชื่อมต่อฐานข้อมูลไม่ได้
+
+ตรวจตามอาการ และดูรายละเอียด connection mode ใน [การปรับใช้ฐานข้อมูล](/guide/database-deployment)
+
+- **`Tenant or user not found`** — พูลเลอร์จับคู่ host/username กับ project ไม่ได้ มักเกิดจากใช้ username ผิดรูปแบบ (shared pooler ต้องเป็น `postgres.[PROJECT-REF]` หรือ `[ROLE].[PROJECT-REF]`) หรือ copy host มาไม่ครบ
+- **`Connection refused`** — มักเป็นการถูก ban ชั่วคราวหรือ network/IP ไม่ตรง: direct connection เป็น IPv6 เป็นค่าเริ่มต้น ถ้าเครือข่ายเป็น IPv4-only ให้ใช้ shared pooler (พอร์ต 5432 หรือ 6543)
+- **`prepared statement ... already exists`** — ใช้ transaction pooler (6543) แต่ไม่ได้ปิด prepared statements ให้เติม `?pgbouncer=true` ใน `DATABASE_URL`
+- **`db push` ล้มเหลวผ่าน pooler** — อย่ารัน DDL ผ่าน transaction pooler ให้ใช้ session pooler หรือ direct connection
+- **`Too many connections`** — ลด `connection_limit` หรือใช้ transaction mode สำหรับ serverless
+- **auth ล้มเหลว** — ตรวจว่ารหัสผ่าน percent-encode แล้ว และไม่ได้พิมพ์ค่าจริงออก terminal/chat
+- **project ถูก pause** — free tier อาจหยุดเมื่อไม่ใช้งาน ต้อง resume ก่อนเชื่อมต่อ
+
 ## `/setup` แจ้ง schema ยังไม่พร้อม
 
 ตรวจ `DATABASE_URL` และ schema state ก่อน หากเป็น local/dev ที่อนุมัติแล้วจึงพิจารณา:

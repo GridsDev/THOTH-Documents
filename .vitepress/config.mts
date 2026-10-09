@@ -16,6 +16,7 @@ export default defineConfig({
       { text: "เริ่มพัฒนา", link: "/guide/quick-start" },
       { text: "อ้างอิง API", link: "/reference/api" },
       { text: "สถานะ", link: "/guide/status" },
+      { text: "เว็บไซต์เอกสาร", link: "https://thoth-documents.vercel.app/" },
       { text: "Source code", link: "https://github.com/Ex0-Adam/THOTH-V2" },
     ],
     sidebar: {
@@ -36,6 +37,7 @@ export default defineConfig({
             { text: "Workflow นักพัฒนา", link: "/guide/development" },
             { text: "การตั้งค่า Environment", link: "/guide/configuration" },
             { text: "ฐานข้อมูลและโมเดล", link: "/guide/data-model" },
+            { text: "การปรับใช้ฐานข้อมูล", link: "/guide/database-deployment" },
             { text: "การทดสอบ", link: "/guide/testing" },
           ],
         },

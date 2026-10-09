@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../services/next/01-PRODUCTS-BUSINESS/THOTH"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../../services/next/01-PRODUCTS-BUSINESS/Micro-Marketplace"
+		}
+	],
+	"settings": {}
+}

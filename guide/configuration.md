@@ -30,6 +30,15 @@
 | `S3_PUBLIC_URL_BASE` | ใช้ CDN/custom public URL | public base URL ไม่ใช่ credential |
 | `NODE_ENV`, `PORT` | runtime | กำหนดโดย platform/container ตาม environment |
 
+## Managed PostgreSQL (เช่น Supabase)
+
+`DATABASE_URL` รับ connection string ของ PostgreSQL มาตรฐาน จึงใช้กับ managed provider ได้ provider อย่าง Supabase ให้ connection string หลายแบบ (direct, session pooler, transaction pooler) ซึ่งต่างกันที่พอร์ต IPv4/IPv6 และการรองรับ prepared statements
+
+- เลือก connection mode ให้ตรงกับที่แอปรัน แล้วดูตัวอย่างและข้อควรระวังใน [การปรับใช้ฐานข้อมูล](/guide/database-deployment)
+- `DIRECT_URL` เป็นตัวแปรที่ **ยังไม่ถูกใช้ใน schema ปัจจุบัน** จะใช้ได้ต้องเพิ่ม `directUrl = env("DIRECT_URL")` ใน `prisma/schema.prisma` ก่อน
+- ถ้าใช้ transaction pooler ต้องเติม `?pgbouncer=true` ใน `DATABASE_URL` เพื่อปิด prepared statements
+- เพิ่ม `sslmode=require` ให้ connection string และห้ามนำ Supabase `anon`/`service_role` key มาใส่ในแอป THOTH
+
 ## ความไม่ตรงกันใน template ปัจจุบัน
 
 ไฟล์ CMS `.env.example` ยังมีชื่อ `AWS_S3_BUCKET`, `AWS_S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` แต่โค้ด storage ใช้ `S3_*` ที่ระบุด้านบน ชื่อ AWS เดิม **ไม่ถูกใช้แทน `S3_*` โดย adapter ตาม source ที่ตรวจ** อย่าคัดลอกตัวแปรผิดชื่อแล้วคาดหวังว่า S3/R2 จะทำงาน

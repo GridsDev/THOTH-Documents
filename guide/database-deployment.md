@@ -1,0 +1,148 @@
+# การปรับใช้ฐานข้อมูล
+
+หน้านี้รวบรวมวิธีเตรียมและเชื่อมต่อฐานข้อมูล PostgreSQL ให้กับ CMS ของ THOTH รวมถึงการใช้งานร่วมกับ **Supabase** ซึ่งเป็นหนึ่งใน PostgreSQL provider ที่โครงการต้นทางอ้างถึง
+
+> เนื้อหาแบ่งเป็น 2 ส่วนชัดเจน: **สิ่งที่ตรวจได้จาก source ของ THOTH** และ **พฤติกรรมของ Supabase/Prisma จากเอกสารทางการ** อย่านำคำแนะนำของ provider ไปใช้โดยไม่ตรวจกับ environment จริง
+
+## สถานะปัจจุบันของ THOTH (ตรวจจาก source)
+
+| หัวข้อ | ข้อเท็จจริง |
+| --- | --- |
+| ORM | Prisma `^6.19.2` (`@prisma/client`, `prisma`) |
+| Datasource | `provider = "postgresql"`, อ่าน URL จาก `env("DATABASE_URL")` เท่านั้น |
+| Generator | `prisma-client-js` (ยังไม่ใช้ driver adapter) |
+| Migrations | ไม่มีโฟลเดอร์ `prisma/migrations/` — schema ถูกนำขึ้นด้วย `prisma db push` |
+| `prisma.config.ts` | ไม่มีในโครงการ |
+| Docker entrypoint | รัน `npx prisma db push && npm run start` ทุกครั้งที่ container เริ่ม |
+
+ผลที่ตามมา:
+
+- ตัวแปรเดียวที่ schema ใช้คือ `DATABASE_URL` ยังไม่มี `DIRECT_URL`
+- คำสั่ง CLI (`db push`, `generate`, `studio`) ใช้ `DATABASE_URL` ชุดเดียวกับ runtime
+- การรัน `db push` ทุกครั้งใน container เปลี่ยน schema จริง — ต้อง review/backup/อนุมัติก่อน production (ดู [การติดตั้งใช้งาน](/guide/deployment))
+
+## ตัวเลือกฐานข้อมูล PostgreSQL
+
+THOTH ต้องการ PostgreSQL ที่เข้าถึงได้ผ่าน connection string มาตรฐาน (`postgresql://...`) ตัวเลือกที่พบบ่อย:
+
+- **Self-hosted / Docker** — PostgreSQL ในเครื่องหรือ VPS เหมาะกับ local/dev และระบบที่ควบคุมเอง
+- **Managed PostgreSQL** — เช่น Supabase, Neon หรือผู้ให้บริการอื่นที่ให้ connection string แบบ PostgreSQL มาตรฐาน (โครงการต้นทางระบุว่ารองรับ "PostgreSQL-compatible like Neon, Supabase" ใน `RELEASE_NOTES.md`)
+
+การเลือก provider มีผลกับเรื่อง **connection pooling**, **IPv4/IPv6**, **SSL** และ **ข้อจำกัดของ plan** ซึ่งอธิบายในหัวข้อถัดไป
+
+## Supabase: connection string 4 แบบ
+
+Supabase ให้ connection string สี่แบบ แต่ละแบบใช้คนละพอร์ต/โฮสต์ (อ้างอิงเอกสาร Supabase ณ ตุลาคม 2026):
+
+| แบบ | ตัวอย่างโฮสต์:พอร์ต | ใช้เมื่อ |
+| --- | --- | --- |
+| Direct connection | `db.[PROJECT-REF].supabase.co:5432` | backend ที่อยู่นาน (VM, container), migration, `pg_dump` — แต่เป็น IPv6 เป็นค่าเริ่มต้น |
+| Shared pooler — Session mode | `[POOLER-HOST]:5432` | เครือข่าย IPv4-only, เครื่องมือบุคคลที่สาม; รองรับ prepared statements |
+| Shared pooler — Transaction mode | `[POOLER-HOST]:6543` | serverless/edge ที่เปิด connection สั้น ๆ จำนวนมาก; ไม่รองรับ prepared statements |
+| Dedicated pooler | `db.[PROJECT-REF].supabase.co:6543` | plan แบบจ่ายเงิน, ใช้ transaction mode เท่านั้น |
+
+ข้อควรรู้ที่กระทบ THOTH โดยตรง:
+
+- **Direct connection เป็น IPv6** เว้นแต่เปิด IPv4 add-on ส่วน **shared pooler เป็น IPv4 ทุก plan** — serverless หลายเจ้าจึงต้องใช้ pooler
+- ชื่อผู้ใช้ (username) ต่างกัน: direct/dedicated ใช้ `postgres`; shared pooler ใช้ `postgres.[PROJECT-REF]` และถ้าใช้ role เองจะใช้ `[ROLE].[PROJECT-REF]`
+- อย่าเดาโฮสต์ของ pooler จาก region — ให้ copy จาก Dashboard ปุ่ม **Connect** เท่านั้น
+- รหัสผ่านที่มีอักขระพิเศษ (`&`, `#`, `?`, ช่องว่าง) ต้อง **percent-encode** ก่อนใส่ใน URL
+
+ดึง string จาก Dashboard: เปิด project → ปุ่ม **Connect** → เลือก method → copy แล้วแทน `[YOUR-PASSWORD]`
+
+## ตั้งค่า `DATABASE_URL` สำหรับ THOTH
+
+### กรณี backend อยู่นาน (VPS / container / self-host)
+
+ใช้ **Session pooler** (พอร์ต 5432) หรือ direct connection ได้ทั้งคำสั่ง CLI และ runtime เพราะ schema ของ THOTH อ่านค่าเดียว:
+
+```bash
+# ตัวอย่าง placeholder เท่านั้น — ห้ามใส่ค่าจริงในเอกสารหรือ source control
+DATABASE_URL="postgresql://prisma.[PROJECT-REF]:[YOUR-PASSWORD]@[POOLER-HOST]:5432/postgres?schema=public"
+```
+
+Session pooler ใช้ได้กับทั้ง `prisma db push` และ Prisma Client จึงเป็นตัวเลือกที่ตรงกับโครงสร้างปัจจุบันของ THOTH มากที่สุด
+
+### กรณี serverless (เช่น Vercel Functions)
+
+เอกสาร Supabase แนะนำให้แอปใช้ **Transaction pooler** (พอร์ต 6543) และ CLI ใช้ connection แยก:
+
+```bash
+# ใช้กับแอป (transaction mode) — ต้องเติม pgbouncer=true
+DATABASE_URL="postgresql://prisma.[PROJECT-REF]:[YOUR-PASSWORD]@[POOLER-HOST]:6543/postgres?pgbouncer=true&connection_limit=1"
+
+# ใช้กับ Prisma CLI (session mode หรือ direct)
+DIRECT_URL="postgresql://prisma.[PROJECT-REF]:[YOUR-PASSWORD]@[POOLER-HOST]:5432/postgres"
+```
+
+`?pgbouncer=true` บอก Prisma ให้ปิด prepared statements ซึ่ง transaction mode ไม่รองรับ
+
+> **ข้อจำกัดที่ต้องแก้ก่อนใช้ `DIRECT_URL` กับ THOTH:** schema ปัจจุบันไม่มี `directUrl` และไม่มี `prisma.config.ts` ถ้าต้องการให้ CLI ใช้ connection คนละตัวกับ runtime จะต้องแก้ `prisma/schema.prisma`:
+
+```prisma
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // ต้องเพิ่ม — ยังไม่มีใน schema ปัจจุบัน
+}
+```
+
+การแก้ datasource เป็นการเปลี่ยนสคีมา ต้องผ่านการ review และอัปเดต environment ทุกที่ (local, Vercel, Docker)
+
+## นำ schema ขึ้นฐานข้อมูล
+
+หลังตั้ง `DATABASE_URL` แล้ว ใน root ของ CMS:
+
+```bash
+npm ci
+npx prisma generate
+npx prisma db push
+```
+
+ข้อบังคับเรื่อง pooler:
+
+- **อย่ารัน `db push` ผ่าน transaction pooler (พอร์ต 6543)** เพราะ DDL/advisory lock ไม่ทำงานเสถียรผ่าน transaction mode ให้ใช้ session pooler หรือ direct connection
+- บน local/dev ที่อนุมัติแล้วเท่านั้นจึงใช้ `db push`; production ควรมี backup และขั้นตอน review ก่อนทุกครั้ง
+- THOTH ยังไม่มี migration history — ถ้าต้องการ migration แบบ version-controlled ต้องเพิ่ม `prisma/migrations/` และปรับ flow อย่างตั้งใจ (ยังไม่ใช่สถานะปัจจุบัน)
+
+## SSL และความปลอดภัย
+
+- ตั้ง `sslmode=require` เพื่อบังคับเชื่อมต่อแบบเข้ารหัส (ค่า `prefer` อาจถอยไปส่งข้อมูลแบบ plaintext)
+- ถ้าต้องการตรวจสอบ server ด้วย ให้โหลด root certificate จาก **Database settings** ของ Supabase แล้วใช้ `sslmode=verify-full` กับ `sslrootcert`
+- **THOTH ไม่ใช้ Supabase Data API / client library** จึงไม่ต้องนำ `anon` key หรือ `service_role` key มาใส่ในแอป เก็บเฉพาะ connection string
+- พิจารณาสร้าง database role เฉพาะสำหรับ Prisma แทนการใช้ `postgres` โดยจำกัดสิทธิ์เท่าที่จำเป็น (ดู [คำแนะนำของ Supabase](https://supabase.com/docs/guides/database/prisma))
+- ถ้าใช้ Prisma เพียงอย่างเดียว (ไม่ใช้ PostgREST) พิจารณาปิด Data API ใน Project Settings
+- ห้ามพิมพ์ connection string หรือรหัสผ่านออก terminal/chat/log — ตรวจแค่ว่า "ตั้งค่าแล้ว" (ดู [การตั้งค่า Environment](/guide/configuration))
+
+## Connection pooling และ limit
+
+- Supabase มี pooler ฝั่ง server และ Prisma มี pool ฝั่งแอปแยกกัน `connection_limit` ควบคุมจำนวน connection ที่แอปเปิด
+- Serverless: ตั้ง `connection_limit=1` และสร้าง Prisma Client ที่ module scope ไม่ใช่ต่อ request
+- ถ้าเจอ `Too many connections` ให้ลด `connection_limit` หรือย้ายไป transaction mode
+- ศึกษา limit ของ plan (pool size และจำนวน connection สูงสุด) จาก [เอกสาร pooling ของ Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres/pooling-and-limits)
+
+## Backup, restore และการดูแล
+
+- ใช้ **direct connection หรือ session pooler** สำหรับ `pg_dump`/restore/replication เพราะเป็น single session และใช้คำสั่ง native ของ PostgreSQL
+- ตรวจว่าระดับ backup ของ Supabase ตรงกับความต้องการธุรกิจหรือไม่ (ขึ้นกับ plan) และทดสอบ restore ไม่ใช่แค่สมมติว่ามี backup
+- โครงการ Supabase บน free tier อาจ **ถูก pause เมื่อไม่มีการใช้งาน** เป็นเวลานาน — production ควรใช้ plan ที่ไม่หยุดเอง
+- ก่อนเปลี่ยน schema: สำรองข้อมูล, ทดสอบกับฐานข้อมูลที่มีสำเนา, แล้วจึงเปลี่ยนจริง
+
+## Checklist ก่อนใช้ฐานข้อมูล production
+
+- [ ] เลือก connection mode ให้ตรงกับที่รัน (persistent → session/direct; serverless → transaction + `DIRECT_URL`)
+- [ ] ตั้ง `DATABASE_URL` (และ `DIRECT_URL` ถ้าแก้ schema) ใน secret manager ของทุก environment
+- [ ] ยืนยัน SSL (`sslmode=require` หรือ `verify-full`)
+- [ ] สร้าง role เฉพาะและจำกัดสิทธิ์; หลีกเลี่ยง `postgres` ถ้าไม่จำเป็น
+- [ ] เตรียม backup และทดสอบ restore
+- [ ] กำหนดวิธีนำ schema ขึ้น (ยังคงเป็น `db push` หรือเปลี่ยนเป็น migrations) พร้อม approval
+- [ ] ตรวจ pool/`connection_limit` ให้เหมาะกับจำนวน instance ของแอป
+- [ ] อย่าใช้ Supabase key ใด ๆ ในแอป THOTH; เก็บเฉพาะ connection string
+
+## อ้างอิง
+
+- [Prisma — Supabase](https://www.prisma.io/docs/orm/overview/databases/supabase) (ตรวจตุลาคม 2026)
+- [Supabase — Connect to your database](https://supabase.com/docs/guides/database/connecting-to-postgres) (ตรวจตุลาคม 2026)
+- [Supabase — Prisma quickstart](https://supabase.com/docs/guides/database/prisma) (ตรวจตุลาคม 2026)
+- [Supabase — Connection pooling and limits](https://supabase.com/docs/guides/database/connecting-to-postgres/pooling-and-limits)
+- ภายใน: [ฐานข้อมูลและโมเดล](/guide/data-model), [การตั้งค่า Environment](/guide/configuration), [การติดตั้งใช้งาน](/guide/deployment), [แก้ปัญหาเบื้องต้น](/guide/troubleshooting)

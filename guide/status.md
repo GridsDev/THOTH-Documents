@@ -20,7 +20,7 @@
 6. **Products:** ไม่มี Product model/API; `/products` ใน Public Web redirect ไป `/projects`
 7. **Dashboard:** ไม่ย้ายไป Public Web ตามมติ เพราะไม่มี public stats API ที่กำหนดไว้
 8. **API versioning/pagination:** ไม่พบสัญญา versioned API หรือ pagination ทั่วไปจาก routes ที่ตรวจ
-9. **Database deployment:** Docker entrypoint รัน `prisma db push`; ต้องประเมินก่อน production
+9. **Database deployment:** Docker entrypoint รัน `prisma db push`; schema อ่านแค่ `DATABASE_URL` (ไม่มี `directUrl`/`prisma.config.ts`) และไม่มี migrations — ต้องประเมินก่อน production และดู [การปรับใช้ฐานข้อมูล](/guide/database-deployment) สำหรับ Supabase/pooling
 10. **Lint baseline:** เอกสาร project context บันทึก 30 errors / 22 warnings สำหรับ root; ตรวจผลใหม่ก่อน release
 
 ## แยก “เสร็จ” จาก “แผน”

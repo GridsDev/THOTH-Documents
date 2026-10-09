@@ -11,6 +11,8 @@
 | Public Web | public pages; ติดต่อ CMS ผ่าน API |
 | Object storage (optional) | media เมื่อเลือก S3/R2 |
 
+การเตรียมฐานข้อมูล PostgreSQL รวมถึงการใช้งานร่วมกับ managed provider อย่าง Supabase (connection string, pooling, SSL, backup) มีรายละเอียดใน [การปรับใช้ฐานข้อมูล](/guide/database-deployment)
+
 สอง Next.js apps มี build/runtime แยกกันได้ Public Web ต้องตั้ง `NEXT_PUBLIC_THOTH_API_URL`; CMS เป็นตัวเดียวที่ควรถือ `DATABASE_URL`
 
 ## CMS: ตรวจ manifest และ Dockerfile ก่อน
