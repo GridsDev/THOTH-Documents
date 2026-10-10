@@ -28,26 +28,16 @@
 
 ปัจจุบัน Public Web ใช้ server-side fetch เป็นหลัก ดังนั้น server-to-server requests ไม่ถูก browser CORS enforcement ควบคุม
 
-## HTML content — ยังมีความเสี่ยง
+## HTML content — Sanitization ปิดแล้ว (2026-10-10)
 
-CMS และ Public Web render `Page.content` ด้วย `dangerouslySetInnerHTML` และยังไม่มี sanitizer ในจุด render ที่ตรวจพบ การจำกัดผู้เขียนเป็น admin ลดช่องทางโจมตีจาก anonymous user แต่ไม่ป้องกัน XSS หาก admin/session/editor/content ถูก compromise
-
-ก่อนเปิด content จากผู้ใช้/extension หรือระบบภายนอก:
-
-1. ใช้ HTML sanitizer แบบ allowlist ที่เหมาะกับ server-side rendering
-2. sanitize ที่ boundary ชัดเจน และพิจารณาข้อมูลเก่าที่บันทึกไว้แล้ว
-3. ทดสอบ script/event-handler/unsafe URL payloads
-4. รักษาความสอดคล้องระหว่าง CMS preview และ Public Web rendering
-
-Sanitization ยังรอคำตัดสิน/implementation แยก จึงไม่ควรสื่อว่าเนื้อหา HTML ปลอดภัยแล้ว
+CMS และ Public Web ใช้ `sanitize-html` allowlist + `normalizeUrl` ทั้งตอนบันทึก (`app/api/pages` ×2) และตอน render ทั้งสองทาง (`app/[slug]` + `apps/web/[slug]`) — dependency `sanitize-html@^2.18.0` ติดตั้งครบ ทดสอบผ่านใน `tests/xss-sanitization.test.mjs` ×5 · `dangerouslySetInnerHTML` ยังใช้แต่ input ถูก sanitize แล้ว
 
 ## Upload
 
-- `/api/upload` กำหนด allowlist MIME: JPEG, PNG, WebP, GIF, SVG และขนาดไม่เกิน 5 MiB
-- route ใช้ session guard
-- ยังไม่มี rate limit ตามสถานะที่บันทึกไว้
-- ตรวจ MIME type จาก metadata เพียงอย่างเดียวไม่ได้พิสูจน์ชนิด bytes จริง
-- SVG เป็น active content format; ควรตรวจ policy/serving behavior ก่อนรับจากแหล่งที่ไม่เชื่อถือ
+- `/api/upload` + `/api/admin/media` กำหนด allowlist MIME: JPEG, PNG, WebP, GIF — **ตัด `image/svg+xml` ออกแล้ว** (จนกว่าจะมี SVG sanitizer ที่เชื่อถือได้) และขนาดไม่เกิน 5 MiB (CMS) / 10 MiB (admin media)
+- route ใช้ session guard + rate limit (in-memory fixed-window, hard cap 10k buckets, env `UPLOAD_RATE_LIMIT_MAX`/`WINDOW_MS`)
+- ตรวจ content สายตา (magic bytes) ต้องตรงกับ declared `file.type` — JPEG `FFD8FF`, PNG `89504E47`, WebP `RIFF....WEBP`, GIF `GIF8`
+- ไฟล์ไม่ตรง → 400 `File content does not match its declared type`
 
 ## Automation secret
 

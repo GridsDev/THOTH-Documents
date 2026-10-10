@@ -27,21 +27,21 @@ THOTH คือระบบจัดการเนื้อหา (CMS) ที�
 
 | ส่วน | เทคโนโลยีที่ประกาศ |
 | --- | --- |
-| CMS | Next.js 16.2.0, React 19.2.4, TypeScript |
+| CMS | Next.js 16.4.0, React 19.2.4, TypeScript |
 | Public Web | Next.js 16.2.0, React 19.2.4, TypeScript |
 | Style | Tailwind CSS 4 |
-| Database access | Prisma 6.x |
+| Database access | Prisma 6.19.x |
 | Database provider | PostgreSQL |
-| Test runner ของ CMS | Node.js built-in test runner |
+| Test runner ของ CMS | Node.js built-in test runner (151 tests) |
 | เอกสารโครงการนี้ | VitePress 1.6.4 |
 
 เวอร์ชันเหล่านี้อ่านจาก package manifests ณ วันที่จัดทำเอกสาร ควรตรวจ `package.json`/lockfile ก่อนอัปเกรดหรืออ้างเป็นเวอร์ชันปัจจุบันในอนาคต
 
 ## สิ่งที่ไม่ควรเข้าใจผิด
 
-- `Projects` ไม่ใช่ `Products`; ไม่มี Product model หรือ `/api/products` ใน CMS schema/API ที่ตรวจ
-- `apps/web/` และ CMS ยังมี public routes ที่ซ้ำกันในช่วงก่อน cutover โดยตั้งใจ
-- มี `extensions/` และ scaffold tool แต่ไม่พบ extension package จริงที่ติดตั้งอยู่ใน source ณ วันที่ตรวจ
+- `Projects` ไม่ใช่ `Products`; ไม่มี Product model หรือ `/api/products` ใน CMS schema/API ที่ตรวจ — **root CMS ถูกลบ `/products` และ `/dashboard` แล้ว (2026-10-10)**; `apps/web/` มี `/products` redirect ไป `/projects`
+- `apps/web/` และ CMS ยังมี public routes ที่ซ้ำกันในช่วงก่อน cutover โดยตั้งใจ (Home, dynamic slug)
+- มี `extensions/` และ scaffold tool แต่ไม่พบ extension package จริงที่ติดตั้งอยู่ใน source ณ วันที่ตรวจ (มีตัวอย่าง `hello-module` อยู่แล้ว)
 - การมี route/API ไม่ได้แปลว่ามี pagination, versioning, OpenAPI contract หรือ production SLA
 
 ## แผนภาพองค์ประกอบ

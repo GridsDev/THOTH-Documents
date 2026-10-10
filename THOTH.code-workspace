@@ -1,13 +1,16 @@
 {
 	"folders": [
 		{
-			"path": "../../services/next/01-PRODUCTS-BUSINESS/THOTH"
+			"path": "../../services/next/01-PRODUCTS-BUSINESS/THOTH",
+			"name": "THOTH — CMS (separate repo)"
 		},
 		{
-			"path": "."
+			"path": ".",
+			"name": "THOTH-Documents — VitePress docs (separate repo)"
 		},
 		{
-			"path": "../../services/next/01-PRODUCTS-BUSINESS/Micro-Marketplace"
+			"path": "../../services/next/01-PRODUCTS-BUSINESS/Micro-Marketplace",
+			"name": "Micro-Marketplace — catalogue (separate repo)"
 		}
 	],
 	"settings": {}

@@ -13,7 +13,7 @@
 | `/products` | redirect 307 ไป `/projects` |
 | `/{slug}` | ดึง Page ด้วย slug; draft/unknown slug เป็น 404 |
 
-CMS ยังมี Home, Products, Dashboard และ dynamic slug route เดิมในช่วงก่อน cutover
+**root CMS ถูกลบ `/products` และ `/dashboard` แล้ว (2026-10-10)** — คงเหลือ `/`, `/[slug]`, `/login`, `/setup`; dynamic slug route คงอยู่ในช่วงก่อน cutover
 
 ## API client
 

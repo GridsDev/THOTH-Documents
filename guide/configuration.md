@@ -39,12 +39,6 @@
 - ถ้าใช้ transaction pooler ต้องเติม `?pgbouncer=true` ใน `DATABASE_URL` เพื่อปิด prepared statements
 - เพิ่ม `sslmode=require` ให้ connection string และห้ามนำ Supabase `anon`/`service_role` key มาใส่ในแอป THOTH
 
-## ความไม่ตรงกันใน template ปัจจุบัน
-
-ไฟล์ CMS `.env.example` ยังมีชื่อ `AWS_S3_BUCKET`, `AWS_S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` แต่โค้ด storage ใช้ `S3_*` ที่ระบุด้านบน ชื่อ AWS เดิม **ไม่ถูกใช้แทน `S3_*` โดย adapter ตาม source ที่ตรวจ** อย่าคัดลอกตัวแปรผิดชื่อแล้วคาดหวังว่า S3/R2 จะทำงาน
-
-ตัวแปร `SMTP_*`, `GEMINI_API_KEY`, `GITHUB_API_TOKEN`, `LOG_LEVEL`, `SKIP_ENV_VALIDATION` ปรากฏใน template แต่การมีใน template ไม่ยืนยันว่าทุกตัวเชื่อมกับ implementation ปัจจุบัน
-
 ## Public Web variable
 
 ```bash

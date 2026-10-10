@@ -11,15 +11,17 @@
 | ORM | Prisma `^6.19.2` (`@prisma/client`, `prisma`) |
 | Datasource | `provider = "postgresql"`, อ่าน URL จาก `env("DATABASE_URL")` เท่านั้น |
 | Generator | `prisma-client-js` (ยังไม่ใช้ driver adapter) |
-| Migrations | ไม่มีโฟลเดอร์ `prisma/migrations/` — schema ถูกนำขึ้นด้วย `prisma db push` |
+| Migrations | มี baseline migration `prisma/migrations/20261010120000_init/`; Docker entrypoint ใช้ `prisma migrate deploy` |
 | `prisma.config.ts` | ไม่มีในโครงการ |
-| Docker entrypoint | รัน `npx prisma db push && npm run start` ทุกครั้งที่ container เริ่ม |
+| Docker entrypoint | รัน `npx prisma migrate deploy && npm run start` ทุกครั้งที่ container เริ่ม |
+| Production deployment | ใช้ Vercel; Vercel build config ปัจจุบันไม่ได้เรียก Dockerfile และไม่ได้ apply migrations ให้อัตโนมัติ |
 
 ผลที่ตามมา:
 
 - ตัวแปรเดียวที่ schema ใช้คือ `DATABASE_URL` ยังไม่มี `DIRECT_URL`
-- คำสั่ง CLI (`db push`, `generate`, `studio`) ใช้ `DATABASE_URL` ชุดเดียวกับ runtime
-- การรัน `db push` ทุกครั้งใน container เปลี่ยน schema จริง — ต้อง review/backup/อนุมัติก่อน production (ดู [การติดตั้งใช้งาน](/guide/deployment))
+- คำสั่ง CLI (`migrate deploy`, `db push`, `generate`, `studio`) ใช้ `DATABASE_URL` ชุดเดียวกับ runtime
+- Docker/self-host ใช้ migration history; Vercel production ต้องมีขั้นตอน apply migration แยกจาก Vercel build/deploy
+- `prisma migrate resolve --applied` ใช้เฉพาะการรับรู้ baseline ที่ schema มีอยู่แล้วและตรวจว่าตรงกับ migration; อย่าใช้แทนการ apply migration กับฐานข้อมูลใหม่หรือ schema ที่ไม่ตรงกัน
 
 ## ตัวเลือกฐานข้อมูล PostgreSQL
 
@@ -91,19 +93,29 @@ datasource db {
 
 ## นำ schema ขึ้นฐานข้อมูล
 
-หลังตั้ง `DATABASE_URL` แล้ว ใน root ของ CMS:
+THOTH มี baseline migration แล้ว และ Docker entrypoint จะเรียก `prisma migrate deploy` ก่อนเริ่มแอป สำหรับการ deploy บน Vercel ต้องสั่ง apply migrations เป็นขั้นตอน release แยกต่างหาก เพราะ `vercel.json` ปัจจุบันไม่ได้เรียก Dockerfile หรือรัน migration command
+
+ฐานข้อมูลใหม่: หลังตั้ง `DATABASE_URL` ที่ชี้ไปยังฐานข้อมูลเป้าหมายแล้ว ใน root ของ CMS ให้ apply migration:
 
 ```bash
 npm ci
 npx prisma generate
-npx prisma db push
+npx prisma migrate deploy
 ```
+
+ฐานข้อมูลเดิมที่เคยสร้างด้วย `prisma db push`: อย่าสั่ง `migrate deploy` ก่อนทำ baseline เพราะ Prisma อาจพยายามสร้างตารางที่มีอยู่แล้ว ทำขั้นตอนต่อไปนี้ครั้งเดียว **หลังตรวจสอบว่า schema ในฐานข้อมูลตรงกับ baseline `20261010120000_init` ทุกประการ**:
+
+```bash
+npx prisma migrate resolve --applied 20261010120000_init
+npx prisma migrate deploy
+```
+
+หาก schema ไม่ตรงกับ baseline ให้หยุดและตรวจ diff/วางแผน migration ก่อน ห้ามแก้โดยลบตารางหรือใช้ `db push` ทับ production โดยไม่ตรวจผลกระทบและสำรองข้อมูล
 
 ข้อบังคับเรื่อง pooler:
 
-- **อย่ารัน `db push` ผ่าน transaction pooler (พอร์ต 6543)** เพราะ DDL/advisory lock ไม่ทำงานเสถียรผ่าน transaction mode ให้ใช้ session pooler หรือ direct connection
-- บน local/dev ที่อนุมัติแล้วเท่านั้นจึงใช้ `db push`; production ควรมี backup และขั้นตอน review ก่อนทุกครั้ง
-- THOTH ยังไม่มี migration history — ถ้าต้องการ migration แบบ version-controlled ต้องเพิ่ม `prisma/migrations/` และปรับ flow อย่างตั้งใจ (ยังไม่ใช่สถานะปัจจุบัน)
+- **อย่ารัน `migrate deploy` หรือ DDL ผ่าน transaction pooler (พอร์ต 6543)** หากผู้ให้บริการจำกัด advisory locks/DDL ใน transaction mode; ใช้ session pooler หรือ direct connection สำหรับ migration
+- `db push` ให้ใช้กับ local/dev ที่อนุมัติแล้วเท่านั้น; production ให้ใช้ migration ที่ผ่าน review พร้อม backup
 
 ## SSL และความปลอดภัย
 
@@ -135,7 +147,7 @@ npx prisma db push
 - [ ] ยืนยัน SSL (`sslmode=require` หรือ `verify-full`)
 - [ ] สร้าง role เฉพาะและจำกัดสิทธิ์; หลีกเลี่ยง `postgres` ถ้าไม่จำเป็น
 - [ ] เตรียม backup และทดสอบ restore
-- [ ] กำหนดวิธีนำ schema ขึ้น (ยังคงเป็น `db push` หรือเปลี่ยนเป็น migrations) พร้อม approval
+- [ ] Production ใช้ `migrate deploy` ใน release workflow ที่ควบคุมได้ และตรวจ baseline ก่อนครั้งแรกบน DB เดิม
 - [ ] ตรวจ pool/`connection_limit` ให้เหมาะกับจำนวน instance ของแอป
 - [ ] อย่าใช้ Supabase key ใด ๆ ในแอป THOTH; เก็บเฉพาะ connection string
 

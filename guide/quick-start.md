@@ -40,11 +40,20 @@ npx prisma generate
 
 สั่ง apply schema กับ **ฐานข้อมูล development ที่ยืนยันแล้วเท่านั้น**:
 
+**ฐานข้อมูลใหม่ (Fresh DB):**
 ```bash
-npx prisma db push
+npm ci
+npx prisma generate
+npx prisma migrate deploy
 ```
 
-คำสั่งนี้ sync schema ปัจจุบันโดยตรง ไม่ใช่ migration history ที่ version-control; ดู [Database](/guide/data-model) และ [Deployment](/guide/deployment)
+**ฐานข้อมูลเดิมที่เคยสร้างด้วย `prisma db push`:** ต้องทำครั้งเดียวก่อนใช้ `migrate deploy`
+```bash
+npx prisma migrate resolve --applied 20261010120000_init
+npx prisma migrate deploy
+```
+
+คำสั่ง `prisma migrate deploy` ใช้ migration history ที่ version-control; ดู [Database](/guide/data-model) และ [Deployment](/guide/deployment)
 
 เริ่ม CMS:
 
@@ -96,7 +105,7 @@ Root CMS:
 ```bash
 npx tsc --noEmit
 npm run lint
-npm test
+npm test           # 151 tests
 npm run build
 ```
 

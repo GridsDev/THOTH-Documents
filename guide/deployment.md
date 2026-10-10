@@ -1,6 +1,6 @@
 # การติดตั้งใช้งาน
 
-หน้านี้เป็นแนวทางที่ต้องยืนยันกับ target platform จริง ไม่ได้ระบุว่า deployment ปัจจุบันได้รับการทดสอบกับทุกผู้ให้บริการ
+Production ของ THOTH CMS ใช้ Vercel ตามสถานะ deployment ล่าสุดของโครงการ ส่วน Docker เป็นทางเลือกสำหรับผู้ที่ต้องการ self-host ไม่ใช่ runtime ที่ Vercel เรียกใช้
 
 ## ส่วนประกอบที่ deploy
 
@@ -15,17 +15,25 @@
 
 สอง Next.js apps มี build/runtime แยกกันได้ Public Web ต้องตั้ง `NEXT_PUBLIC_THOTH_API_URL`; CMS เป็นตัวเดียวที่ควรถือ `DATABASE_URL`
 
-## CMS: ตรวจ manifest และ Dockerfile ก่อน
+## CMS: Vercel และ Docker/self-host
 
-Root Dockerfile ใช้ Node 22 Alpine ใน build stages และ build Next standalone output แต่ runner command ปัจจุบันเรียก:
+### Vercel (production)
+
+Vercel ใช้ `vercel.json` และ root Next.js app เป็น build/deployment configuration โดยไม่ได้เรียกคำสั่ง `CMD` ใน Dockerfile ดังนั้น `npx prisma migrate deploy` ที่ Dockerfile ระบุ **ไม่ทำงานบน Vercel**
+
+Vercel build/deploy ไม่ได้ apply Prisma migrations ให้อัตโนมัติจาก `vercel.json` ปัจจุบัน ผู้ดูแลต้อง apply migrations กับฐานข้อมูลก่อนหรือเป็นส่วนหนึ่งของ release workflow ที่ควบคุมได้ ดู [การปรับใช้ฐานข้อมูล](/guide/database-deployment) สำหรับขั้นตอน baseline และคำสั่ง
+
+### Docker / self-host
+
+Root Dockerfile ใช้ Node 22 Alpine และ build Next standalone output; เมื่อ container เริ่ม คำสั่งใน runner จะทำงานดังนี้:
 
 ```text
-npx prisma db push && npm run start
+npx prisma migrate deploy && npm run start
 ```
 
-การเรียก `db push` ทุกครั้งเมื่อ container เริ่มมีผลกับ database schema จริง อย่านำไปใช้ production โดยไม่ review/backup/approval และกำหนด migration workflow ให้ชัด
+`prisma migrate deploy` ใช้ migrations ที่ยังไม่ถูก apply กับฐานข้อมูล ก่อนเริ่มเว็บ สำหรับฐานข้อมูลใหม่จะสร้าง schema จาก migration; ฐานข้อมูลเดิมที่สร้างด้วย `prisma db push` ต้องตรวจ schema เทียบกับ baseline และบันทึก baseline ว่า apply แล้วก่อนเปิดใช้ entrypoint นี้ ดู [การปรับใช้ฐานข้อมูล](/guide/database-deployment) ก่อนทำ
 
-Root `docker-compose.yml` มี PostgreSQL service และ CMS service แต่ compose config มี default credentials และเผยแพร่ port 5432 ออกสู่ host ตามไฟล์ที่ตรวจ ใช้เฉพาะ local/dev หลังพิจารณาความเสี่ยง; ห้ามยกค่าตัวอย่างไป production
+`docker-compose.yml` ประกาศ PostgreSQL service ชื่อ `db` และ CMS service ชื่อ `cms`; ต้องกำหนด `POSTGRES_PASSWORD` ก่อนรัน และ compose เผยแพร่พอร์ต PostgreSQL 5432 ออกสู่ host ตาม config จึงควรทบทวนการเปิดพอร์ตและ firewall ก่อนใช้งานบน host ที่เข้าถึงจากภายนอก
 
 ## Public Web: standalone
 
@@ -68,4 +76,4 @@ npm run start
 
 ## ข้อจำกัดด้านหลักฐาน
 
-เอกสาร source เดิมมี deployment examples ที่อาจไม่ตรงกับ service names/config ของ Docker Compose ในปัจจุบัน จึงต้องเทียบกับ `Dockerfile`, `docker-compose.yml`, platform config และ environment จริงก่อนใช้คำสั่ง deploy
+สถานะ Production บน Vercel และการตั้งค่า Docker อ้างอิง config ของโครงการที่ตรวจล่าสุด ทั้งนี้ ก่อนรันคำสั่งหรือเปลี่ยน schema ให้ตรวจ platform/environment เป้าหมายจริงทุกครั้ง และห้ามนำ credentials ตัวอย่างไปใช้
